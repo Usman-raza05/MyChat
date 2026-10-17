@@ -1,97 +1,163 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# MyChat
 
-# Getting Started
+A realtime one-to-one chat app for Android, built with React Native (CLI) and Supabase.
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+![Platform](https://img.shields.io/badge/platform-Android-3DDC84)
+![React Native](https://img.shields.io/badge/React%20Native-CLI-61DAFB)
+![Supabase](https://img.shields.io/badge/backend-Supabase-3ECF8E)
+![Firebase](https://img.shields.io/badge/push-Firebase%20Cloud%20Messaging-FFCA28)
 
-## Step 1: Start Metro
+## Screenshots
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+<!-- Replace these with your own screenshots. Put the images in a /docs folder. -->
+| Chats | Conversation | Profile |
+| :---: | :---: | :---: |
+| ![Chats](docs/chats.jpg) | ![Conversation](docs/chat.jpg) | ![Profile](docs/profile.jpg) |
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+## Features
 
-```sh
-# Using npm
-npm start
+- Email and password authentication with persistent sessions
+- User profiles with unique usernames
+- One-to-one conversations, created on demand without duplicates
+- Realtime messaging powered by Supabase Realtime
+- Chat list with last message, time, and unread count
+- Message status: sending, sent, delivered, and read
+- Typing indicator and online status
+- Day separators (Today, Yesterday, full date)
+- Push notifications for new messages, even when the app is closed
+- Light and dark mode that follows the system setting
+- Row Level Security on every table, so users can only access their own chats
 
-# OR using Yarn
-yarn start
+## Tech stack
+
+| Area | Technology |
+| --- | --- |
+| App | React Native CLI (bare workflow, no Expo), JavaScript |
+| Backend | Supabase (Postgres, Auth, Realtime, Edge Functions) |
+| Push notifications | Firebase Cloud Messaging with Notifee |
+| Navigation | React Navigation |
+
+## How push notifications work
+
+```
+New row in messages
+  → database trigger calls the send-push Edge Function
+  → the function looks up the recipient's device tokens
+  → Firebase Cloud Messaging delivers the notification
+  → tapping it opens the right conversation
 ```
 
-## Step 2: Build and run your app
+## Getting started
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
+### Prerequisites
 
-### Android
+- Node.js 18 or later
+- JDK 17
+- Android Studio with the Android SDK, and `ANDROID_HOME` set
+- A [Supabase](https://supabase.com) project
+- A [Firebase](https://console.firebase.google.com) project with an Android app registered as `com.mychat`
 
-```sh
-# Using npm
-npm run android
+### 1. Clone and install
 
-# OR using Yarn
-yarn android
+```bash
+git clone https://github.com/Usman-raza05/MyChat.git
+cd MyChat
+npm install
 ```
 
-### iOS
+### 2. Set up Supabase
 
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
+1. Create a new Supabase project.
+2. Open the SQL Editor and run the SQL scripts for the tables, policies, functions, and triggers. Make sure Row Level Security is enabled on every table.
+3. Turn on Realtime for the `messages` table.
+4. Copy your **Project URL** and **publishable key** from Project Settings → API.
+5. Add them to the Supabase client file (`src/lib/supabase.ts`).
 
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
+> Use only the publishable key in the app. Never put a secret or `service_role` key in client code.
 
-```sh
-bundle install
+### 3. Set up Firebase
+
+1. Register an Android app in Firebase with the package name `com.mychat`.
+2. Download `google-services.json` and place it in `android/app/`.
+3. Generate a service account key under Project Settings → Service accounts. You will store it as a Supabase secret in the next step, not in the app.
+
+### 4. Deploy the push notification function
+
+```bash
+npx supabase login
+npx supabase link --project-ref <your-project-ref>
+
+npx supabase secrets set --env-file .env.secrets
+npx supabase functions deploy send-push --no-verify-jwt
 ```
 
-Then, and every time you update your native dependencies, run:
+`.env.secrets` needs two values:
 
-```sh
-bundle exec pod install
+```
+FIREBASE_SERVICE_ACCOUNT=<contents of the service account JSON, on one line>
+WEBHOOK_SECRET=<a long random string>
 ```
 
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
+Then create the database trigger that calls the function on every new message, using the same `WEBHOOK_SECRET` value in the request header.
 
-```sh
-# Using npm
-npm run ios
+### 5. Fonts and icons
 
-# OR using Yarn
-yarn ios
+Place the font files in `assets/fonts/` and link them:
+
+```bash
+npx react-native-asset
 ```
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+### 6. Run the app
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+```bash
+npx react-native start
+npx react-native run-android
+```
 
-## Step 3: Modify your app
+## Building a release APK
 
-Now that you have successfully run the app, let's make changes!
+```bash
+cd android
+./gradlew assembleRelease
+```
 
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
+The APK is created at `android/app/build/outputs/apk/release/app-release.apk`.
 
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
+For public distribution, sign the app with your own keystore instead of the debug key.
 
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
+## Project structure
 
-## Congratulations! :tada:
+```
+src/
+  components/    Reusable UI (icons, bubbles, avatars)
+  context/       Auth and app state
+  lib/           Supabase client and notification helpers
+  screens/       App screens
+  strings.js     All user-facing text
+  theme.js       Colors, fonts, spacing
+supabase/
+  functions/
+    send-push/   Edge Function that sends push notifications
+android/         Native Android project
+```
 
-You've successfully run and modified your React Native App. :partying_face:
+## Security notes
 
-### Now what?
+- Row Level Security is enabled on all tables.
+- Firebase service account keys and the webhook secret live in Supabase Secrets only.
+- `.env.secrets`, service account files, and keystores are listed in `.gitignore`. Do not commit them.
 
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
+## Roadmap
 
-# Troubleshooting
+- [ ] Group chats
+- [ ] Image and file sharing
+- [ ] Phone number login
+- [ ] iOS support
 
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
+## Contributing
 
-# Learn More
+Issues and pull requests are welcome. For larger changes, open an issue first to discuss what you'd like to change.
 
-To learn more about React Native, take a look at the following resources:
+## License
 
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
