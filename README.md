@@ -6,6 +6,7 @@ A realtime one-to-one chat app for Android, built with React Native (CLI) and Su
 ![React Native](https://img.shields.io/badge/React%20Native-CLI-61DAFB)
 ![Supabase](https://img.shields.io/badge/backend-Supabase-3ECF8E)
 ![Firebase](https://img.shields.io/badge/push-Firebase%20Cloud%20Messaging-FFCA28)
+![License](https://img.shields.io/badge/license-MIT-blue)
 
 ## Screenshots
 
@@ -161,3 +162,4 @@ Issues and pull requests are welcome. For larger changes, open an issue first to
 
 ## License
 
+This project is licensed under the [MIT License](LICENSE).
