@@ -1,45 +1,35 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
+import React, { useEffect } from 'react';
+import { StatusBar, useColorScheme } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { NavigationContainer, createNavigationContainerRef } from '@react-navigation/native';
+import { AuthProvider } from './src/context/AuthContext';
+import { RootNavigator } from './src/navigation/RootNavigator';
+import { setupNotificationOpenedListener } from './src/lib/notifications';
+import { migrateStorageKeys } from './src/utils/storageMigration';
 
-import { NewAppScreen } from '@react-native/new-app-screen';
-import { StatusBar, StyleSheet, useColorScheme, View } from 'react-native';
-import {
-  SafeAreaProvider,
-  useSafeAreaInsets,
-} from 'react-native-safe-area-context';
+export const navigationRef = createNavigationContainerRef();
 
-function App() {
-  const isDarkMode = useColorScheme() === 'dark';
+export default function App() {
+  const isDark = useColorScheme() === 'dark';
+
+  useEffect(() => {
+    console.log('[boot] App mounted');
+    migrateStorageKeys().catch((e) => console.warn('[boot] Storage migration error:', e));
+    try {
+      setupNotificationOpenedListener(navigationRef);
+    } catch (e) {
+      console.error('[boot] Error setting up notification listener:', e);
+    }
+  }, []);
 
   return (
     <SafeAreaProvider>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <AppContent />
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
+      <AuthProvider>
+        <NavigationContainer ref={navigationRef}>
+          <RootNavigator />
+        </NavigationContainer>
+      </AuthProvider>
     </SafeAreaProvider>
   );
 }
-
-function AppContent() {
-  const safeAreaInsets = useSafeAreaInsets();
-
-  return (
-    <View style={styles.container}>
-      <NewAppScreen
-        templateFileName="App.tsx"
-        safeAreaInsets={safeAreaInsets}
-      />
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-});
-
-export default App;
