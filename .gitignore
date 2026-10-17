@@ -73,3 +73,30 @@ yarn-error.log
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
+
+
+# Secrets and credentials (never commit these)
+.env
+.env.*
+!.env.example
+.env.secrets
+firebase-key.json
+*-firebase-adminsdk-*.json
+service-account*.json
+make-secrets.js
+*.jks
+*.p12
+*.pem
+
+# Firebase config (contains project keys; keep it local)
+android/app/google-services.json
+ios/GoogleService-Info.plist
+
+# Supabase CLI local files
+supabase/.temp/
+supabase/.branches/
+
+# Build outputs
+*.apk
+*.aab
+android/app/release/
